@@ -198,9 +198,38 @@ h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 30px;
 #reaction-kind { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 28px; }
 #reaction-kind.cheer { color: #6f8f6a; }
 #reaction-kind.roast, #reaction-kind.noob { color: #b96f52; }
+#reaction-kind.timeout { color: #b96f52; }
+#reaction-kind.winerr { color: #a63a2e; }
 #reaction-score { font-size: 20px; font-weight: 700; color: #8a8175; margin-top: 4px; }
 #reaction-line { font-size: 20px; font-weight: 600; color: #3d3a35; margin: 12px 0 4px; }
 #reaction-answer { font-size: 15px; color: #8a8175; }
+
+/* ---- freaky feel layer (meme + sounds only; the calm card stays) ---- */
+/* The meme plays inside the calm reaction card — same cream card, same
+   fonts, no colour or layout restyle. */
+#reaction-meme { margin: 10px auto 4px; max-width: 340px; }
+#reaction-meme img, #reaction-meme video {
+  display: block; width: 100%; max-height: 220px; object-fit: contain;
+  border-radius: 16px; border: 1px solid #e7dfd2; background: #f6efe3;
+  -webkit-tap-highlight-color: transparent;
+}
+#reaction-meme img { animation: meme-pop .3s ease both; }
+@keyframes meme-pop { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+/* Rainbow horse: Pancake the hamster on a unicorn flies across the whole
+   screen. Pointer-events none — it can never block a tap. */
+#rainbow-horse-layer { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+.rainbow-horse {
+  position: absolute; left: 0; top: 18%; width: 42vmin; max-width: 300px;
+  pointer-events: none; animation: horse-fly 1.8s linear both;
+}
+.rainbow-horse.big { top: 30%; width: 56vmin; max-width: 380px; animation-duration: 2.2s; }
+@keyframes horse-fly { from { transform: translateX(-45vw); } to { transform: translateX(110vw); } }
+.rainbow-horse video { width: 100%; display: block; border-radius: 12px; }
+.sparkle {
+  position: absolute; width: 10px; height: 10px; border-radius: 50%;
+  background: #e8b64c; pointer-events: none; animation: sparkle-twinkle 1.2s ease-out both;
+}
+@keyframes sparkle-twinkle { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(2.4); } }
 
 /* ---- result ---- */
 .final-score { font-size: 52px; font-weight: 700; margin: 6px 0; color: #3d3a35; }
