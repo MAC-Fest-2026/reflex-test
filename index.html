@@ -7,14 +7,10 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<!-- Flying meme faces: chaos layer. Behind the game card, never blocks clicks. -->
-<div id="float-layer" aria-hidden="true"></div>
-
 <header class="topbar">
   <div class="brand">REFLEX <span>TEST</span> <em>MAC Fest 2026</em></div>
   <div class="topbar-btns">
     <button id="fs-toggle" type="button" title="Fullscreen on / off">FULLSCREEN</button>
-    <button id="sound-toggle" type="button" title="Sound on / off">SOUND: ON</button>
   </div>
 </header>
 
@@ -24,31 +20,14 @@
     <div class="card tilt-left">
       <h1>REFLEX<br>TEST</h1>
       <p class="tagline">10 rounds. 20 points. Fast hands only.</p>
-      <p class="rules">Get it right: +2 and the memes cheer you.<br>
-      Get it wrong: &minus;1 and the memes roast you. Out loud. In front of everyone.<br>
+      <p class="rules">Get it right: +2 and a quiet cheer.<br>
+      Get it wrong: &minus;1 and a gentle roast.<br>
       Score 0 and get one wrong? That's a full <strong>NOOB</strong>.</p>
       <p class="rules">Pick ONE challenge. All 10 rounds are that style — no mixing.<br>
       Mouse only, so every player is measured the same way.</p>
 
-      <div class="challenge-cards">
-        <button type="button" class="challenge-card" data-challenge="memory">
-          <span class="challenge-emoji" aria-hidden="true">🧠</span>
-          <span class="challenge-name">MEMORY BLOCKS</span>
-          <span class="challenge-desc">Watch the blocks light up, then click them back in the same order.</span>
-          <span class="challenge-best" id="best-memory">Best today: —</span>
-        </button>
-        <button type="button" class="challenge-card" data-challenge="odd">
-          <span class="challenge-emoji" aria-hidden="true">👀</span>
-          <span class="challenge-name">ODD ONE OUT</span>
-          <span class="challenge-desc">Spot the one shape that is different — size or shape. Click it, fast.</span>
-          <span class="challenge-best" id="best-odd">Best today: —</span>
-        </button>
-        <button type="button" class="challenge-card" data-challenge="color">
-          <span class="challenge-emoji" aria-hidden="true">⚡</span>
-          <span class="challenge-name">COLOR CHANGE TAP</span>
-          <span class="challenge-desc">Wait for the panel to turn green, then tap it. Fastest finger wins.</span>
-          <span class="challenge-best" id="best-color">Best today: —</span>
-        </button>
+      <div id="challenge-cards" class="challenge-cards">
+        <!-- Cards are built from the challenge list in js/game.js (17 games). -->
       </div>
 
       <button id="latency-btn" type="button" class="small-btn">LATENCY SELF-TEST</button>
@@ -65,10 +44,22 @@
         <span id="challenge-name">Memory Blocks</span>
         <span id="score-now">Score: 0</span>
         <span id="best-now">Best: —</span>
+        <button id="howto-link" type="button" class="howto-link">How to play</button>
       </div>
       <div id="timer-wrap" style="display:none"><div id="timer-bar"></div><span id="timer-text"></span></div>
       <div id="progress-dots"></div>
       <div id="play-area"></div>
+    </div>
+  </section>
+
+  <!-- ============ HOW TO PLAY (one per game) ============ -->
+  <section id="howto-screen" class="screen">
+    <div class="card">
+      <h2 id="howto-title">Memory Blocks</h2>
+      <div id="howto-hint" class="howto-hint"></div>
+      <div id="howto-lines"></div>
+      <button id="howto-start-btn" type="button" class="big-btn">START</button>
+      <button id="howto-back-btn" type="button" class="small-btn">BACK TO START</button>
     </div>
   </section>
 
@@ -81,17 +72,15 @@
       <p id="result-verdict"></p>
       <p id="result-stats"></p>
       <p id="result-newbest" class="best-line"></p>
-      <div id="result-meme"></div>
       <!-- Quirky certificate — just for fun. A joke certificate, not a real one. -->
       <div id="certificate" class="certificate">
         <p class="cert-eyebrow">MAC Fest 2026 — Reflex Test</p>
         <p class="cert-title" id="cert-title">Certified Decent Reflexes</p>
         <p class="cert-text">This totally official certificate is awarded for</p>
         <p class="cert-text">scoring <strong id="cert-score">0 / 20</strong> in <span id="cert-challenge">Memory Blocks</span>.</p>
-        <div id="cert-meme" class="cert-meme"></div>
-        <p class="cert-date">Issued <span id="cert-date"></span> · Signed, The Meme Folder</p>
+        <p class="cert-date">Issued <span id="cert-date"></span> · Signed, The Reflex Desk</p>
         <div class="cert-seal">★<br>100%<br>OFFICIAL*</div>
-        <p class="cert-fine">*Not official in any way. The memes have spoken.</p>
+        <p class="cert-fine">*Not official in any way. The reflexes have spoken.</p>
       </div>
       <button id="play-again-btn" type="button" class="big-btn">PLAY AGAIN</button>
       <button id="change-challenge-btn" type="button" class="small-btn">CHANGE CHALLENGE</button>
@@ -121,18 +110,19 @@
   </section>
 </main>
 
-<!-- Reaction overlay: pops INSTANTLY on every round. No warning before a roast — that is the joke. -->
+<!-- Reaction overlay: a calm text line after every round, fading in gently. -->
 <div id="reaction" class="hidden" role="alert">
   <div id="reaction-inner">
     <div id="reaction-kind"></div>
-    <div id="reaction-meme"></div>
+    <div id="reaction-score"></div>
     <div id="reaction-line"></div>
     <div id="reaction-answer"></div>
   </div>
 </div>
 
-<script src="js/memes.js"></script>
+<script src="js/reactions.js"></script>
 <script src="js/challenges.js"></script>
+<script src="js/challenges2.js"></script>
 <script src="js/latency.js"></script>
 <script src="js/game.js"></script>
 </body>
