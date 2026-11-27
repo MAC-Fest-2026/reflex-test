@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<!-- Flying meme faces: chaos layer. Behind the game card, never blocks clicks. -->
+<div id="float-layer" aria-hidden="true"></div>
 <header class="topbar">
   <div class="brand">REFLEX <span>TEST</span> <em>MAC Fest 2026</em></div>
   <div class="topbar-btns">
@@ -15,16 +17,28 @@
 </header>
 
 <main id="app">
-  <!-- ============ START ============ -->
-  <section id="start-screen" class="screen active">
+  <!-- ============ LOBBY ============ -->
+  <section id="lobby-screen" class="screen active">
+    <div class="card lobby-card">
+      <h2 class="lobby-title">REFLEX TEST</h2>
+      <p class="lobby-mode">MAC FEST 2026</p>
+      <div class="lobby-crew">
+        <video src="memes/roasting/roast-38.mp4" autoplay loop muted playsinline title="Red crewmate"></video>
+        <video src="memes/roasting/roast-39.mp4" autoplay loop muted playsinline title="Imposter suit"></video>
+        <video src="memes/roasting/roast-40.mp4" autoplay loop muted playsinline title="Emergency meeting"></video>
+      </div>
+      <p class="lobby-rules">You get <strong>10 rounds</strong> of ONE reflex challenge. Get it right: <strong>+2</strong> and the memes cheer you. Get it wrong: <strong>&minus;1</strong> and the memes roast you. Out loud. In front of everyone. Score 0 and get one wrong? That's a full <strong>NOOB</strong>.</p>
+      <p class="lobby-sus">One of your reflexes is sus. Find it.</p>
+      <button id="let-me-in-btn" type="button" class="big-btn lobby-btn">LET ME IN</button>
+      <p class="hint">The session starts when you tap LET ME IN — not before.</p>
+    </div>
+  </section>
+
+  <!-- ============ START (CHALLENGE GRID) ============ -->
+  <section id="start-screen" class="screen">
     <div class="card tilt-left">
-      <h1>REFLEX<br>TEST</h1>
+      <h2 class="grid-title">PICK YOUR POISON</h2>
       <p class="tagline">10 rounds. 20 points. Fast hands only.</p>
-      <p class="rules">Get it right: +2 and a quiet cheer.<br>
-      Get it wrong: &minus;1 and a gentle roast.<br>
-      Score 0 and get one wrong? That's a full <strong>NOOB</strong>.</p>
-      <p class="rules">Pick ONE challenge. All 10 rounds are that style — no mixing.<br>
-      Mouse only, so every player is measured the same way.</p>
 
       <div id="challenge-cards" class="challenge-cards">
         <!-- Cards are built from the challenge list in js/game.js (17 games). -->
@@ -111,7 +125,7 @@
 </main>
 
 <!-- Reaction overlay: the meme + its paired sound after every round.
-     The calm lofi card stays; the meme plays inside it. -->
+     Pops instantly, no warning before a roast — that is the joke. -->
 <div id="reaction" class="hidden" role="alert">
   <div id="reaction-inner">
     <div id="reaction-kind"></div>
