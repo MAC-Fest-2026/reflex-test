@@ -18,8 +18,10 @@
 //           ever — entry.voice is only shown as text on screen. (No TTS in
 //           reactions or gameplay; SpeechSynthesis exists ONLY for the
 //           instruction-screen narration in game.js, by the user's explicit
-//           choice.) The two silent memes are roast-14 (Kermit) and roast-34
-//           (Speed laughing) — no genuine clips exist for them anywhere.
+//           choice.) The three silent memes are roast-14 (Kermit), roast-34
+//           (Speed laughing) — no genuine clips exist for them — and cheer-13
+//           (Happy dance): its paired clip was a woman moaning, removed
+//           2026-11-27 at the user's word, file deleted from the repo.
 // tier  = contextual roast/cheer tier, picked by feel.js. Roast: mild |
 //         harsh | brutal | streak. Cheer: standard | comeback | big. A meme
 //         keeps its ONE paired mp3 whatever its tier — tiers only choose
@@ -48,7 +50,7 @@ const MEMES = {
     {"file":"memes/cheering/cheer-10.mp4","voice":"YES! Look at that win!","audio":"memes/cheering/cheer-02.mp3","tier":"big"},
     {"file":"memes/cheering/cheer-11.mp4","voice":"SpongeBob and Patrick are celebrating YOU!","audio":"memes/cheering/cheer-14.mp3","tier":"big"},
     {"file":"memes/cheering/cheer-12.mp4","voice":"SpongeBob dance! Correct!","audio":"memes/cheering/cheer-12.mp3","tier":"comeback"},
-    {"file":"memes/cheering/cheer-13.mp4","voice":"Happy dance! You got it!","audio":"memes/cheering/cheer-08.mp3","tier":"comeback"},
+    {"file":"memes/cheering/cheer-13.mp4","voice":"Happy dance! You got it!","audio":null,"tier":"comeback"},
     {"file":"memes/cheering/cheer-14.mp4","voice":"The whole Minion crowd is cheering for you!","audio":"memes/cheering/cheer-01.mp3","tier":"big"},
     {"file":"memes/cheering/cheer-15.mp4","voice":"Yaaaay! You did it!","audio":"memes/cheering/cheer-15.mp3","tier":"big"},
     {"file":"memes/cheering/cheer-16.mp4","voice":"Woohoo! Homer approves!","audio":"memes/cheering/cheer-11.mp3","tier":"comeback"},
