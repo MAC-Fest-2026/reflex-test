@@ -1,9 +1,10 @@
 # Reflex Test — MAC Fest 2026
 
-**A calm reflex game for fast hands.** Pick one reflex challenge, play
-10 rounds of that style with the mouse, and every round ends in a quiet
-cheer or a gentle roast — as text only. No memes, no sounds, no shouting.
-Warm paper, soft sage, dusty blue, terracotta.
+**A calm reflex game for fast hands — with a freaky feel.** Pick one reflex
+challenge, play 10 rounds of that style with the mouse. The UI stays calm
+lofi (warm paper, soft sage, dusty blue, terracotta), but every round ends
+in a meme + its paired sound, brutal about the score, never about the
+person. No slurs, no racist content, school-safe.
 
 ## Challenges (pick 1, play 10 rounds)
 
@@ -20,23 +21,57 @@ Warm paper, soft sage, dusty blue, terracotta.
 ## Scoring (same as Math Roast, never drifts)
 
 Correct +2, wrong −1, max 20, floor 0. **NOOB rule:** at score exactly 0, a
-wrong round keeps the score at 0 and shows a calm NOOB text line.
+wrong round keeps the score at 0 and shows a dedicated NOOB meme + sound
+(can fire repeatedly).
 
-## Reactions (text only)
+## Reactions (memes + sounds, calm UI)
 
-After every round the overlay fades in gently with a short line of text and
-the score change (+2, −1, or "stays at 0"). The lines live in
-`js/reactions.js` — one random line per round, never the same twice in a row.
-No images, no video, no audio, no text-to-speech anywhere.
+After every round the overlay shows a meme image/video in the same calm
+card, plays ONLY that meme's ONE paired mp3 (see `js/memes.js` — one line
+per meme changes a pairing), and auto-advances after ~2.4 s. The meme's
+voice line is the text under it; the calm text pools in `js/reactions.js`
+are the fallback if a meme ever has no voice. Pools: 16 cheering
+(standard / comeback / big), 24 roasting (mild / harsh / brutal / streak),
+6 NOOB, 7 timeout (crying chicken + 6), 1 Windows error screen (3rd
+consecutive wrong answer, once per session), 2 rainbow horse videos.
+
+- **Timeouts** show `TIME'S UP!` with the crying-chicken cry, escalating by
+  consecutive losses: 1st ~1 s @ 0.7 volume, 2nd ~2 s @ 0.85, 3rd ~3 s @ 1.0,
+  4th+ the LOUD "WAH" (6 s).
+- **Rainbow horse:** a correct answer in under 2 s, or finishing the whole
+  session in under 60 s, flies Pancake the hamster on a unicorn across the
+  screen (~1.8 s, pointer-events none). Airhorn on a 3-correct streak and on
+  a great finish.
+- **Result music by band:** 15–19 fanfare, 10–14 cheer, 0–9 the FULL "One
+  Little Pigeon" song (2:10, `audio/sfx/pigeon-full.mp3`) — it plays through
+  until the player leaves the result screen.
+- **Instruction narration:** when a game's instruction screen opens (first
+  pick or mid-game "How to play"), its 3 instruction lines are read aloud
+  with the robot voice (SpeechSynthesis) — the user's explicit choice, and
+  the ONLY TTS in the game. It stops the moment START is pressed, the
+  screen closes, or the player navigates away. No TTS in reactions or
+  gameplay; a meme with no genuine clip plays silent.
+- **SpongeBob cap:** exactly 5 SpongeBob memes in the whole pool.
+- **Balance:** Color Confusion (Stroop) is capped at 3 seconds per round
+  for every round; the difficulty ramp is the colour count (3 → 4 → 5).
 
 ## Files
 
 - `index.html` — start / game / result / latency-test screens
 - `css/style.css` — calm lofi look, bundled fonts, no blue tap highlight
-- `js/game.js` — session flow, scoring, NOOB rule, reaction overlay
-- `js/challenges.js` — the three challenges + difficulty ramps
-- `js/reactions.js` — calm cheer / roast / NOOB text lines
+- `js/game.js` — session flow, scoring, NOOB rule, reaction overlay,
+  instruction narration (SpeechSynthesis, instruction screens only)
+- `js/challenges.js` — the three original challenges + difficulty ramps
+- `js/challenges2.js` — the 14 Braincup-inspired challenges
+- `js/reactions.js` — calm cheer / roast / NOOB text lines (fallback voices)
+- `js/memes.js` — the meme index: every meme + its ONE paired mp3
+- `js/feel.js` — the feel engine: meme picking, tiers, chicken cry,
+  rainbow horse, airhorn, result music
 - `js/latency.js` — built-in latency self-test panel
+- `memes/` — reaction GIFs/mp4s + their paired mp3s (cheering, roasting,
+  timeout, rainbow; NOOB files live in `roasting/`, Math Roast style)
+- `audio/sfx/` — fanfare, cheer, the full pigeon song, airhorn, chicken
+  cries, Windows XP error ding
 - `fonts/` — Quicksand + Fraunces (bundled woff2, works offline)
 
 ## Latency (this game is a measuring instrument)

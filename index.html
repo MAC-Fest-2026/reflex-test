@@ -110,17 +110,25 @@
   </section>
 </main>
 
-<!-- Reaction overlay: a calm text line after every round, fading in gently. -->
+<!-- Reaction overlay: the meme + its paired sound after every round.
+     The calm lofi card stays; the meme plays inside it. -->
 <div id="reaction" class="hidden" role="alert">
   <div id="reaction-inner">
     <div id="reaction-kind"></div>
+    <div id="reaction-meme"></div>
     <div id="reaction-score"></div>
     <div id="reaction-line"></div>
     <div id="reaction-answer"></div>
   </div>
 </div>
 
+<!-- Rainbow horse layer: Pancake the hamster on a unicorn flies across
+     on fast correct answers and sub-60s finishes. Pointer-events none. -->
+<div id="rainbow-horse-layer"></div>
+
 <script src="js/reactions.js"></script>
+<script src="js/memes.js"></script>
+<script src="js/feel.js"></script>
 <script src="js/challenges.js"></script>
 <script src="js/challenges2.js"></script>
 <script src="js/latency.js"></script>
