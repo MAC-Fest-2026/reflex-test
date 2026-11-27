@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reflex Test — MAC Fest 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- Flying meme faces: chaos layer. Behind the game card, never blocks clicks. -->
+<div id="float-layer" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">REFLEX <span>TEST</span> <em>MAC Fest 2026</em></div>
+  <div class="topbar-btns">
+    <button id="fs-toggle" type="button" title="Fullscreen on / off">FULLSCREEN</button>
+    <button id="sound-toggle" type="button" title="Sound on / off">SOUND: ON</button>
+  </div>
+</header>
+
+<main id="app">
+  <!-- ============ START ============ -->
+  <section id="start-screen" class="screen active">
+    <div class="card tilt-left">
+      <h1>REFLEX<br>TEST</h1>
+      <p class="tagline">10 rounds. 20 points. Fast hands only.</p>
+      <p class="rules">Get it right: +2 and the memes cheer you.<br>
+      Get it wrong: &minus;1 and the memes roast you. Out loud. In front of everyone.<br>
+      Score 0 and get one wrong? That's a full <strong>NOOB</strong>.</p>
+      <p class="rules">Pick ONE challenge. All 10 rounds are that style — no mixing.<br>
+      Mouse only, so every player is measured the same way.</p>
+
+      <div class="challenge-cards">
+        <button type="button" class="challenge-card" data-challenge="memory">
+          <span class="challenge-emoji" aria-hidden="true">🧠</span>
+          <span class="challenge-name">MEMORY BLOCKS</span>
+          <span class="challenge-desc">Watch the blocks light up, then click them back in the same order.</span>
+          <span class="challenge-best" id="best-memory">Best today: —</span>
+        </button>
+        <button type="button" class="challenge-card" data-challenge="odd">
+          <span class="challenge-emoji" aria-hidden="true">👀</span>
+          <span class="challenge-name">ODD ONE OUT</span>
+          <span class="challenge-desc">Spot the one shape that is different — size or shape. Click it, fast.</span>
+          <span class="challenge-best" id="best-odd">Best today: —</span>
+        </button>
+        <button type="button" class="challenge-card" data-challenge="color">
+          <span class="challenge-emoji" aria-hidden="true">⚡</span>
+          <span class="challenge-name">COLOR CHANGE TAP</span>
+          <span class="challenge-desc">Wait for the panel to turn green, then tap it. Fastest finger wins.</span>
+          <span class="challenge-best" id="best-color">Best today: —</span>
+        </button>
+      </div>
+
+      <button id="latency-btn" type="button" class="small-btn">LATENCY SELF-TEST</button>
+      <p class="hint">Check the stall setup before opening: 20 clicks, average must be 50 ms or under, no click over 80 ms. Use the wired stall mouse.</p>
+      <p class="offline-note">Works offline from local files — no internet needed on fest day.</p>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="game-screen" class="screen">
+    <div class="card game-card">
+      <div class="game-top">
+        <span id="q-count">Round 1 / 10</span>
+        <span id="challenge-name">Memory Blocks</span>
+        <span id="score-now">Score: 0</span>
+        <span id="best-now">Best: —</span>
+      </div>
+      <div id="timer-wrap" style="display:none"><div id="timer-bar"></div><span id="timer-text"></span></div>
+      <div id="progress-dots"></div>
+      <div id="play-area"></div>
+    </div>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section id="result-screen" class="screen">
+    <div class="card tilt-right">
+      <h2 id="result-title">DONE!</h2>
+      <p id="result-challenge"></p>
+      <p class="final-score"><span id="final-score">0</span> / 20</p>
+      <p id="result-verdict"></p>
+      <p id="result-stats"></p>
+      <p id="result-newbest" class="best-line"></p>
+      <div id="result-meme"></div>
+      <!-- Quirky certificate — just for fun. A joke certificate, not a real one. -->
+      <div id="certificate" class="certificate">
+        <p class="cert-eyebrow">MAC Fest 2026 — Reflex Test</p>
+        <p class="cert-title" id="cert-title">Certified Decent Reflexes</p>
+        <p class="cert-text">This totally official certificate is awarded for</p>
+        <p class="cert-text">scoring <strong id="cert-score">0 / 20</strong> in <span id="cert-challenge">Memory Blocks</span>.</p>
+        <div id="cert-meme" class="cert-meme"></div>
+        <p class="cert-date">Issued <span id="cert-date"></span> · Signed, The Meme Folder</p>
+        <div class="cert-seal">★<br>100%<br>OFFICIAL*</div>
+        <p class="cert-fine">*Not official in any way. The memes have spoken.</p>
+      </div>
+      <button id="play-again-btn" type="button" class="big-btn">PLAY AGAIN</button>
+      <button id="change-challenge-btn" type="button" class="small-btn">CHANGE CHALLENGE</button>
+      <button id="home-btn" type="button" class="small-btn">BACK TO START</button>
+    </div>
+  </section>
+
+  <!-- ============ LATENCY SELF-TEST ============ -->
+  <section id="latency-screen" class="screen">
+    <div class="card tilt-left">
+      <h2>LATENCY SELF-TEST</h2>
+      <p class="rules">This game measures reaction time in milliseconds, so the stall setup
+      itself must be measured first. A target flashes in the box below — click
+      it 20 times, as fast as you can, with the <strong>wired stall mouse</strong>.</p>
+      <p class="rules"><strong>Pass:</strong> average 50 ms or under, no single click over 80 ms.
+      On a fail, change one thing at a time — wired mouse, other tabs closed,
+      laptop on mains power, battery-saver off — and re-run.</p>
+      <div id="latency-box">
+        <button id="latency-target" type="button" class="latency-target hidden-target">TAP!</button>
+      </div>
+      <p id="latency-status" class="best-line"></p>
+      <p id="latency-progress" class="best-line">0 / 20 clicks</p>
+      <p id="latency-result"></p>
+      <button id="latency-start-btn" type="button" class="big-btn">START TEST</button>
+      <button id="latency-back-btn" type="button" class="small-btn">BACK TO START</button>
+    </div>
+  </section>
+</main>
+
+<!-- Reaction overlay: pops INSTANTLY on every round. No warning before a roast — that is the joke. -->
+<div id="reaction" class="hidden" role="alert">
+  <div id="reaction-inner">
+    <div id="reaction-kind"></div>
+    <div id="reaction-meme"></div>
+    <div id="reaction-line"></div>
+    <div id="reaction-answer"></div>
+  </div>
+</div>
+
+<script src="js/memes.js"></script>
+<script src="js/challenges.js"></script>
+<script src="js/latency.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
