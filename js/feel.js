@@ -1,7 +1,7 @@
-// Reflex Test — the freaky FEEL layer (memes + sounds + triggers).
-// The calm lofi UI is untouched: this file only drives what happens INSIDE
-// the reaction overlay, the rainbow fly-across and the result-screen music.
-// Scoring, games, instructions and best scores live in game.js / challenges*.
+// Reflex Test — the freaky FEEL layer (memes + sounds + triggers + MLG layer).
+// The UI is freaky now too (Math Roast style): this file also drives the
+// colour flashes, the screen shake and the flying MLG layer. Scoring,
+// games, instructions and best scores live in game.js / challenges*.
 // No TTS anywhere here — reactions use real paired mp3s only. (The one
 // SpeechSynthesis in the game is the instruction-screen narration in
 // game.js, by the user's explicit choice.)
@@ -188,6 +188,116 @@
     setTimeout(function () { if (elx.parentNode) elx.parentNode.removeChild(elx); }, 2000);
   }
 
+  // ---- 2016 MLG colour flash + flying meme layer (ported from Math Roast) ----
+  function flashBody(kind) {
+    // Rapid hue shifts on the PAGE background only. The game card stays
+    // solid white, so the play area stays readable.
+    if (typeof document === 'undefined') return;
+    var cls = kind === 'cheer' ? 'flash-cheer' : 'flash-roast';
+    document.body.classList.remove('flash-cheer', 'flash-roast', 'flash-rainbow');
+    void document.body.offsetWidth;
+    document.body.classList.add(cls);
+    setTimeout(function () { document.body.classList.remove(cls); }, 800);
+  }
+  function shakeBody() {
+    // Screen shake on a wrong round (500 ms, then it stops).
+    if (typeof document === 'undefined') return;
+    document.body.classList.add('shake');
+    setTimeout(function () { document.body.classList.remove('shake'); }, 500);
+  }
+  function allMemeFiles() {
+    // Flying layer = reaction memes + the 2016 MLG tropes (Doritos, Mountain
+    // Dew, Illuminati, FaZe, airhorn, Doge...). Entries are objects; mlg are plain paths.
+    var M = memes();
+    if (!M) return [];
+    var files = [];
+    ['cheering', 'roasting', 'noob'].forEach(function (k) {
+      (M[k] || []).forEach(function (e) { if (e.file) files.push(e.file); });
+    });
+    return files.concat(M.mlg || []);
+  }
+  function makeFloater(burst) {
+    var all = allMemeFiles();
+    if (!all.length || typeof document === 'undefined') return;
+    var layer = document.getElementById('float-layer'); if (!layer) return;
+    var path = all[Math.floor(Math.random() * all.length)];
+    var el = path.toLowerCase().endsWith('.gif')
+      ? document.createElement('img')
+      : document.createElement('video');
+    if (el.tagName === 'VIDEO') { el.muted = true; el.loop = true; el.autoplay = true; el.playsInline = true; }
+    el.src = path; el.className = 'float-meme' + (burst ? ' burst' : '');
+    var size = burst ? 90 + Math.random() * 90 : 60 + Math.random() * 90;
+    el.style.width = size + 'px'; el.style.height = size + 'px';
+    el.style.top = (5 + Math.random() * 80) + '%';
+    el.style.left = burst ? (20 + Math.random() * 60) + '%' : '-15vw';
+    if (!burst) {
+      el.style.animationDuration = (18 + Math.random() * 26) + 's, ' + (1 + Math.random() * 2) + 's';
+      el.style.animationDelay = (-Math.random() * 30) + 's, 0s';
+    }
+    layer.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, burst ? 1200 : 48000);
+  }
+  function startFloaters() {
+    // Ambient MLG layer: 12 floaters at once, a fresh one every 6 s, a
+    // swooper from a different angle every 2.6 s, a jump-cut pop every 4.2 s.
+    // pointer-events: none everywhere — it can NEVER block a tap.
+    if (typeof document === 'undefined') return;
+    if (startFloaters.started) return;
+    startFloaters.started = true;
+    for (var i = 0; i < 12; i++) makeFloater(false);
+    setInterval(function () { makeFloater(false); }, 6000);
+    setInterval(function () { spawnSwooper(); }, 2600);
+    setInterval(function () { spawnJumpPop(); }, 4200);
+  }
+  var SWOOP_DIRS = ['from-top', 'from-bottom', 'from-left', 'from-right', 'from-tl', 'from-tr', 'from-bl', 'from-br'];
+  function spawnSwooper() {
+    var all = allMemeFiles();
+    if (!all.length || typeof document === 'undefined') return;
+    var layer = document.getElementById('float-layer'); if (!layer) return;
+    var path = all[Math.floor(Math.random() * all.length)];
+    var el = path.toLowerCase().endsWith('.gif') ? document.createElement('img') : document.createElement('video');
+    if (el.tagName === 'VIDEO') { el.muted = true; el.loop = true; el.autoplay = true; el.playsInline = true; }
+    el.src = path;
+    var dir = SWOOP_DIRS[Math.floor(Math.random() * SWOOP_DIRS.length)];
+    el.className = 'swooper ' + dir;
+    var size = 80 + Math.random() * 90;
+    el.style.width = size + 'px'; el.style.height = size + 'px';
+    if (dir === 'from-left' || dir === 'from-right') el.style.top = (5 + Math.random() * 80) + '%';
+    else if (dir === 'from-top' || dir === 'from-bottom') el.style.left = (5 + Math.random() * 80) + '%';
+    el.style.animationDuration = (2.5 + Math.random() * 3) + 's';
+    layer.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 6500);
+  }
+  function spawnJumpPop() {
+    // Jump-cut: a meme pops/zooms in at a screen EDGE (never over the middle,
+    // so it can never cover the play area), holds a beat, then vanishes.
+    var all = allMemeFiles();
+    if (!all.length || typeof document === 'undefined') return;
+    var path = all[Math.floor(Math.random() * all.length)];
+    var el = path.toLowerCase().endsWith('.gif') ? document.createElement('img') : document.createElement('video');
+    if (el.tagName === 'VIDEO') { el.muted = true; el.loop = true; el.autoplay = true; el.playsInline = true; }
+    el.src = path; el.className = 'jump-pop';
+    var size = 110 + Math.random() * 70;
+    el.style.width = size + 'px'; el.style.height = size + 'px';
+    var spots = [
+      { left: '2%', top: '12%' }, { left: '2%', top: '62%' },
+      { right: '2%', top: '12%' }, { right: '2%', top: '62%' },
+      { left: '42%', top: '2%' }, { left: '42%', bottom: '2%' }
+    ];
+    var spot = spots[Math.floor(Math.random() * spots.length)];
+    Object.keys(spot).forEach(function (k) { el.style[k] = spot[k]; });
+    document.body.appendChild(el);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 900);
+  }
+  function memeBurst() { for (var i = 0; i < 4; i++) setTimeout(function () { makeFloater(true); }, i * 90); }
+
+  // ---- lobby (Among Us start sound) ----
+  function playAmongUsStart() {
+    // The Among Us starting sound — its only home is the lobby (LET ME IN).
+    if (!soundOn) return;
+    tryPlayFile('audio/sfx/amongus-start.mp3', 3000);
+  }
+
   var api = {
     pickMeme: pickMeme, pickFromTier: pickFromTier,
     roastTierFor: roastTierFor, cheerTierFor: cheerTierFor,
@@ -197,6 +307,10 @@
     playChickenCry: playChickenCry, playAirhorn: playAirhorn,
     playCompletionMusic: playCompletionMusic, stopCurrentAudio: stopCurrentAudio,
     memeEl: memeEl, flyRainbowHorse: flyRainbowHorse, spawnSparkles: spawnSparkles,
+    flashBody: flashBody, shakeBody: shakeBody,
+    startFloaters: startFloaters, makeFloater: makeFloater,
+    spawnSwooper: spawnSwooper, spawnJumpPop: spawnJumpPop, memeBurst: memeBurst,
+    playAmongUsStart: playAmongUsStart,
     setSoundOn: function (v) { soundOn = !!v; },
     isSoundOn: function () { return soundOn; }
   };

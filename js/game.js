@@ -1,8 +1,10 @@
 // Reflex Test — session flow, scoring, NOOB rule, reaction overlay (PRD §2, §4).
 // Scoring must never drift from Math Roast: correct +2, wrong/timeout/
 // false start -1, max 20, floor 0. NOOB rule: at exactly 0, a wrong round
-// keeps the score at 0 and fires the NOOB text line instead of a roast.
-// Reactions are calm text only — no memes, no audio, no voice. The game is silent.
+// keeps the score at 0 and fires the NOOB meme instead of a roast.
+// The UI is freaky Math Roast style now: lobby start, colour flashes,
+// screen shake, MLG flying layer. Reactions are video memes + their ONE
+// paired mp3 (see js/memes.js), never a random sound.
 // 17 challenges: pick one per session, 10 rounds of that style.
 (function (global) {
   'use strict';
@@ -352,6 +354,22 @@
       if (correct && state.correctStreak === 3) F.playAirhorn();
     }
 
+    // Freaky UI triggers (Math Roast style): colour flash on every verdict,
+    // screen shake + meme burst + swoopers on a wrong round. VISUAL ONLY —
+    // no extra sound is layered here: a reaction plays ONLY its paired mp3
+    // (plus the chicken cry on a timeout loss, already handled above). No
+    // siren, no record scratch, no surprise sting — layering a second sound
+    // over the meme's own sound was a bug in Math Roast (siren heard on
+    // right and wrong answers) and is not repeated here.
+    if (F) {
+      F.flashBody(kind === 'cheer' ? 'cheer' : 'roast');
+      if (!correct) {
+        F.shakeBody();
+        F.memeBurst();
+        F.spawnSwooper(); F.spawnSwooper();
+      }
+    }
+
     // Answer line: what happened, in plain words.
     var answer = '';
     if (state.challenge === 'color') {
@@ -424,6 +442,16 @@
   function init() {
     renderCards();
     updateBestLines();
+    // Ambient MLG layer: floaters, swoopers and jump-pops run from load,
+    // behind every screen (lobby, grid, game, result). Pointer-events none.
+    if (typeof window !== 'undefined' && window.ReflexFeel) window.ReflexFeel.startFloaters();
+    // LOBBY: LET ME IN plays the Among Us start sound and reveals the grid.
+    $('let-me-in-btn').addEventListener('click', function () {
+      stopFeelAudio();
+      if (typeof window !== 'undefined' && window.ReflexFeel) window.ReflexFeel.playAmongUsStart();
+      updateBestLines();
+      showScreen('start-screen');
+    });
     $('play-again-btn').addEventListener('click', function () { stopFeelAudio(); if (state) startSession(state.challenge); });
     $('change-challenge-btn').addEventListener('click', function () { stopFeelAudio(); updateBestLines(); showScreen('start-screen'); });
     $('home-btn').addEventListener('click', function () { stopFeelAudio(); updateBestLines(); showScreen('start-screen'); });
