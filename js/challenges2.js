@@ -96,7 +96,7 @@
   // A colour word printed in an ink colour. Tap the button matching the INK
   // colour, from 3/4/5 colour-name buttons. The word is never the ink colour.
   function stroopColorCount(round) { return round <= 3 ? 3 : round <= 7 ? 4 : 5; }
-  function stroopTimeMs(round) { return round <= 3 ? 5000 : round <= 7 ? 4000 : 3000; }
+  function stroopTimeMs(round) { return 3000; } // capped at 3s for every round (user 2026-11-27); difficulty ramps by colour count only
   function makeStroop(round, rand) {
     rand = rand || Math.random;
     var n = stroopColorCount(round);
@@ -109,10 +109,10 @@
   function renderStroop(container, round, onVerdict, bar) {
     var spec = makeStroop(round);
     var done = false, timers = [];
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timers.forEach(clearTimeout); timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     var word = el('div', 'stroop-word', spec.word);
     word.style.color = spec.inkHex;
@@ -128,7 +128,7 @@
     });
     container.appendChild(row);
     setSolution({ ink: spec.ink, word: spec.word });
-    var timer = makeTimer(bar, stroopTimeMs(round), function () { finish(false); });
+    var timer = makeTimer(bar, stroopTimeMs(round), function () { finish(false, true); });
     return { destroy: function () { done = true; timers.forEach(clearTimeout); timer.destroy(); } };
   }
 
@@ -151,10 +151,10 @@
   function renderSchulte(container, round, onVerdict, bar) {
     var spec = makeSchulte(round);
     var done = false;
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     var grid = el('div', 'schulte-grid');
     grid.style.gridTemplateColumns = 'repeat(' + spec.size + ', 1fr)';
@@ -182,7 +182,7 @@
     var hint = el('p', 'play-hint', 'Tap the numbers in order — next: 1');
     container.appendChild(hint);
     setSolution({ numbers: spec.numbers.slice(), total: spec.total });
-    var timer = makeTimer(bar, schulteTimeMs(round), function () { finish(false); });
+    var timer = makeTimer(bar, schulteTimeMs(round), function () { finish(false, true); });
     return { destroy: function () { done = true; timer.destroy(); } };
   }
 
@@ -212,10 +212,10 @@
   function renderFlash(container, round, onVerdict, bar) {
     var spec = makeFlash(round);
     var done = false, timers = [], timer = null;
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timers.forEach(clearTimeout); if (timer) timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     var rand = Math.random;
     var wrap = el('div', 'flash-wrap');
@@ -239,7 +239,7 @@
       r.addEventListener('pointerdown', function (ev) { ev.preventDefault(); finish(spec.moreSide === 'right'); });
       wrap.appendChild(l); wrap.appendChild(r);
       container.querySelector('.play-hint').textContent = 'Which side had MORE dots? Tap it. You have 5 seconds!';
-      timer = makeTimer(bar, 5000, function () { finish(false); });
+      timer = makeTimer(bar, 5000, function () { finish(false, true); });
     }, spec.flashMs, 12));
     return { destroy: function () { done = true; timers.forEach(clearTimeout); if (timer) timer.destroy(); } };
   }
@@ -271,10 +271,10 @@
   function renderSpotNew(container, round, onVerdict, bar) {
     var spec = makeSpotNew(round);
     var done = false, timers = [], timer = null;
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timers.forEach(clearTimeout); if (timer) timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     clearEl(container);
     var stage = el('div', 'spot-stage');
@@ -303,7 +303,7 @@
       stage.appendChild(grid);
       container.querySelector('.play-hint').textContent = 'Tap the shape you did NOT see before. You have 5 seconds!';
       setSolution({ newIndex: spec.newIndex });
-      timer = makeTimer(bar, 5000, function () { finish(false); });
+      timer = makeTimer(bar, 5000, function () { finish(false, true); });
     }
     showNext();
     return { destroy: function () { done = true; timers.forEach(clearTimeout); if (timer) timer.destroy(); } };
@@ -445,10 +445,10 @@
   function renderValue(container, round, onVerdict, bar) {
     var spec = makeValue(round);
     var done = false;
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     clearEl(container);
     var row = el('div', 'value-row');
@@ -462,7 +462,7 @@
     container.appendChild(row);
     container.appendChild(el('p', 'play-hint', 'Tap the one with the higher value. You have 5 seconds!'));
     setSolution({ aValue: spec.a.value, bValue: spec.b.value });
-    var timer = makeTimer(bar, 5000, function () { finish(false); });
+    var timer = makeTimer(bar, 5000, function () { finish(false, true); });
     return { destroy: function () { done = true; timer.destroy(); } };
   }
 
@@ -543,10 +543,10 @@
   function renderFlex(container, round, onVerdict, bar) {
     var spec = makeFlex(round);
     var done = false;
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     clearEl(container);
     var cueRow = el('div', 'flex-cue-row');
@@ -570,7 +570,7 @@
     });
     container.appendChild(optRow);
     setSolution({ correctIndex: spec.correctIndex });
-    var timer = makeTimer(bar, 5000, function () { finish(false); });
+    var timer = makeTimer(bar, 5000, function () { finish(false, true); });
     return { destroy: function () { done = true; timer.destroy(); } };
   }
 
@@ -647,10 +647,10 @@
   function renderVisMem(container, round, onVerdict, bar) {
     var spec = makeVisMem(round);
     var done = false, timers = [], timer = null;
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timers.forEach(clearTimeout); if (timer) timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     clearEl(container);
     var stage = el('div', 'vismem-stage');
@@ -680,7 +680,7 @@
         });
         stage.appendChild(grid);
         hint.textContent = 'Tap the changed shape. You have 5 seconds!';
-        timer = makeTimer(bar, 5000, function () { finish(false); });
+        timer = makeTimer(bar, 5000, function () { finish(false, true); });
       }, 600, 10));
     }, vismemShowMs(round), 14));
     return { destroy: function () { done = true; timers.forEach(clearTimeout); if (timer) timer.destroy(); } };
@@ -702,10 +702,10 @@
   function renderQuickSum(container, round, onVerdict, bar) {
     var spec = makeQuickSum(round);
     var done = false, timers = [], timer = null, typed = '';
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timers.forEach(clearTimeout); if (timer) timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     clearEl(container);
     var stage = el('div', 'quicksum-stage');
@@ -734,7 +734,7 @@
       stage.appendChild(kp.el);
       hint.textContent = 'Type the total, then Enter. You have 10 seconds!';
       setSolution({ total: spec.total });
-      timer = makeTimer(bar, 10000, function () { finish(false); });
+      timer = makeTimer(bar, 10000, function () { finish(false, true); });
     }
     flashNext();
     return { destroy: function () { done = true; timers.forEach(clearTimeout); if (timer) timer.destroy(); } };
@@ -776,10 +776,10 @@
   function renderBubble(container, round, onVerdict, bar) {
     var spec = makeBubble(round);
     var done = false, picked = [];
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     clearEl(container);
     var targetEl = el('div', 'bubble-target', 'Make ' + spec.target);
@@ -808,7 +808,7 @@
     container.appendChild(row);
     container.appendChild(el('p', 'play-hint', 'Tap TWO bubbles that add up to the target. You have 8 seconds!'));
     setSolution({ pair: spec.pair.slice() });
-    var timer = makeTimer(bar, 8000, function () { finish(false); });
+    var timer = makeTimer(bar, 8000, function () { finish(false, true); });
     return { destroy: function () { done = true; timer.destroy(); } };
   }
 
@@ -880,10 +880,10 @@
   function renderTrio(container, round, onVerdict, bar) {
     var spec = makeTrio(round);
     var done = false, picked = [];
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     clearEl(container);
     var grid = el('div', 'trio-grid');
@@ -910,7 +910,7 @@
     container.appendChild(grid);
     container.appendChild(el('p', 'play-hint', 'Tap THREE cards that make a set — every trait all same or all different. You have 15 seconds!'));
     setSolution({ sets: spec.sets.map(function (s) { return s.slice(); }) });
-    var timer = makeTimer(bar, 15000, function () { finish(false); });
+    var timer = makeTimer(bar, 15000, function () { finish(false, true); });
     return { destroy: function () { done = true; timer.destroy(); } };
   }
 
@@ -977,10 +977,10 @@
   function renderPattern(container, round, onVerdict, bar) {
     var spec = makePattern(round);
     var done = false;
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     clearEl(container);
     var grid = el('div', 'pat-grid');
@@ -999,7 +999,7 @@
     container.appendChild(opts);
     container.appendChild(el('p', 'play-hint', 'Tap the piece that completes the last row. You have 10 seconds!'));
     setSolution({ correctIndex: spec.correctIndex });
-    var timer = makeTimer(bar, 10000, function () { finish(false); });
+    var timer = makeTimer(bar, 10000, function () { finish(false, true); });
     return { destroy: function () { done = true; timer.destroy(); } };
   }
 
@@ -1022,10 +1022,10 @@
     if (typeof window !== 'undefined' && window.__RT_FAST__) window.__RT_ORBIT_READY = false;
     var done = false, timers = [], interval = null, timer = null;
     var picked = [];
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timers.forEach(clearTimeout); if (interval) clearInterval(interval); if (timer) timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     clearEl(container);
     var box = el('div', 'orbit-box');
@@ -1082,7 +1082,7 @@
             }
           });
         });
-        timer = makeTimer(bar, 10000, function () { finish(false); });
+        timer = makeTimer(bar, 10000, function () { finish(false, true); });
       }, orbitMoveMs(round), 40));
     }, 1500, 16));
     return { destroy: function () { done = true; timers.forEach(clearTimeout); if (interval) clearInterval(interval); if (timer) timer.destroy(); } };
@@ -1105,10 +1105,10 @@
   function renderDigitMem(container, round, onVerdict, bar) {
     var spec = makeDigitMem(round);
     var done = false, timers = [], timer = null;
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timers.forEach(clearTimeout); if (timer) timer.destroy();
-      onVerdict(correct, {});
+      onVerdict(correct, timedOut ? { reason: 'timeout' } : {});
     }
     clearEl(container);
     var stage = el('div', 'digitmem-stage');
@@ -1153,7 +1153,7 @@
           }
         }, function () { typed2 = ''; kp2.display.textContent = ''; });
         stage.appendChild(kp2.el);
-        timer = makeTimer(bar, 15000, function () { finish(false); });
+        timer = makeTimer(bar, 15000, function () { finish(false, true); });
       }
     }, digitmemShowMs(round), 14));
     return { destroy: function () { done = true; timers.forEach(clearTimeout); if (timer) timer.destroy(); } };

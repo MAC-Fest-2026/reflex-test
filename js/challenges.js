@@ -165,11 +165,13 @@
     container.appendChild(hint);
 
     var done = false, phase = 'playback', pos = 0, timers = [];
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       timers.forEach(clearTimeout);
       if (bar) bar.hide();
-      onVerdict(correct, { sequence: seq, seqLen: seq.length });
+      var ex = { sequence: seq, seqLen: seq.length };
+      if (timedOut) ex.reason = 'timeout';
+      onVerdict(correct, ex);
     }
     function light(i, cls) {
       blocks[i].classList.add(cls || 'lit');
@@ -188,7 +190,7 @@
           if (done) { clearInterval(tick); return; }
           var left = 1 - (Date.now() - t0) / MEMORY_ANSWER_MS;
           if (bar) bar.set(Math.max(0, left));
-          if (left <= 0) { clearInterval(tick); finish(false); }
+          if (left <= 0) { clearInterval(tick); finish(false, true); }
         }, 100);
         timers.push(tick);
         return;
@@ -247,13 +249,15 @@
       if (done) { clearInterval(tick); return; }
       var left = 1 - (Date.now() - t0) / ODD_ROUND_MS;
       if (bar) bar.set(Math.max(0, left));
-      if (left <= 0) { clearInterval(tick); finish(false); }
+      if (left <= 0) { clearInterval(tick); finish(false, true); }
     }, 100);
-    function finish(correct) {
+    function finish(correct, timedOut) {
       if (done) return; done = true;
       clearInterval(tick);
       if (bar) bar.hide();
-      onVerdict(correct, { spec: spec });
+      var ex = { spec: spec };
+      if (timedOut) ex.reason = 'timeout';
+      onVerdict(correct, ex);
     }
     cells.forEach(function (cell, i) {
       cell.addEventListener('pointerdown', function (ev) {

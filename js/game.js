@@ -24,7 +24,7 @@
       howto: ['Wait for the panel to turn green, then tap it as fast as you can.', 'Correct: tap within 600 ms of the change. Wrong: too slow, no tap in 2 s, or a false start.', 'Your time in ms shows every round. +2 correct, −1 wrong.'] },
     { id: 'stroop', name: 'Color Confusion', desc: 'A colour word in the wrong ink. Tap the INK colour.', accent: 'acc-rose',
       preview: '<span class="pv"><span class="pv-word" style="color:#c96f5a">BLUE</span></span>',
-      howto: ['A colour word appears, printed in an ink colour. Tap the button for the INK colour — not the word.', 'Correct: the ink colour. Wrong: the word’s colour, or time runs out.', '5 seconds a round (faster later). +2 correct, −1 wrong.'] },
+      howto: ['A colour word appears, printed in an ink colour. Tap the button for the INK colour — not the word.', 'Correct: the ink colour. Wrong: the word’s colour, or time runs out.', '3 seconds a round. +2 correct, −1 wrong.'] },
     { id: 'schulte', name: 'Schulte Table', desc: 'Tap the numbers in order, 1 → 2 → 3, all the way up.', accent: 'acc-gold',
       preview: '<span class="pv pv-nums"><span>7</span><span>2</span><span>9</span><span>4</span><span>1</span><span>6</span><span>8</span><span>3</span><span>5</span></span>',
       howto: ['Tap the numbers in order, 1 → 2 → 3, all the way up.', 'Correct: the whole sequence. Wrong: one wrong tap, or time runs out.', 'Up to 20 seconds a round. +2 correct, −1 wrong.'] },
@@ -178,6 +178,34 @@
     });
   }
 
+  // ---- instruction narration (robot voice) ----
+  // The user chose SpeechSynthesis for the instruction screens ONLY: when
+  // a game's instruction page opens, its 3 instruction lines are read
+  // aloud. No TTS in reactions or gameplay — reactions use real meme
+  // sounds only. Guarded + silent failure if speech is unavailable.
+  function speakHowto(howtoLines) {
+    try {
+      if (typeof window === 'undefined' || typeof speechSynthesis === 'undefined') return;
+      if (typeof SpeechSynthesisUtterance === 'undefined') return;
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(howtoLines.join('. '));
+      u.rate = 1;
+      speechSynthesis.speak(u);
+    } catch (e) { /* speech unavailable: fail silently */ }
+  }
+  function cancelSpeech() {
+    try {
+      if (typeof window !== 'undefined' && typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+    } catch (e) { /* ignore */ }
+  }
+  // Stop any freaky-feel audio (reaction sound, completion music) when the
+  // player leaves the screen it belongs to.
+  function stopFeelAudio() {
+    try {
+      if (typeof window !== 'undefined' && window.ReflexFeel) window.ReflexFeel.stopCurrentAudio();
+    } catch (e) { /* ignore */ }
+  }
+
   // ---- instruction screen: one per game, before round 1 — and re-openable
   // mid-game from the "How to play" link (the session pauses; resuming
   // restarts the current round, score unchanged).
@@ -200,6 +228,9 @@
     $('howto-start-btn').textContent = mode === 'resume' ? 'RESUME ROUND' : 'START';
     $('howto-back-btn').style.display = mode === 'resume' ? 'none' : '';
     showScreen('howto-screen');
+    // Read the 3 instruction lines aloud (robot voice, instruction screens
+    // only) — both on first pick and on mid-game "How to play".
+    speakHowto(meta.howto);
   }
 
   // ---- session flow ----
@@ -221,8 +252,10 @@
   function startSession(challenge) {
     state = {
       challenge: challenge, round: 1, score: 0, correctCount: 0, times: [],
-      lastCheer: null, lastRoast: null, lastNoob: null, lastKind: null,
-      controller: null, reactionTimer: null
+      lastCheer: null, lastRoast: null, lastNoob: null, lastTimeout: null, lastKind: null,
+      controller: null, reactionTimer: null,
+      consecLosses: 0, correctStreak: 0, winErrShown: false,
+      sessionStart: Date.now(), roundStart: Date.now()
     };
     $('challenge-name').textContent = CHALLENGE_NAMES[challenge];
     showScreen('game-screen');
@@ -230,6 +263,7 @@
   }
 
   function startRound() {
+    state.roundStart = Date.now();
     var bar = makeBar();
     bar.hide();
     $('q-count').textContent = 'Round ' + state.round + ' / ' + TOTAL_ROUNDS;
@@ -258,19 +292,65 @@
   function onVerdict(correct, extra) {
     if (!state) return;
     extra = extra || {};
-    if (correct) state.correctCount++;
+    var F = (typeof window !== 'undefined') ? window.ReflexFeel : null;
+    var M = (typeof window !== 'undefined') ? window.MEMES : null;
+    var isTimeout = extra.reason === 'timeout';
+    var hadLoss = state.lastKind === 'roast' || state.lastKind === 'noob' || state.lastKind === 'timeout';
+    var streakBefore = state.correctStreak;
+    var elapsedMs = Date.now() - state.roundStart;
+    if (correct) { state.correctCount++; state.correctStreak++; state.consecLosses = 0; }
+    else { state.correctStreak = 0; state.consecLosses++; }
     if (state.challenge === 'color' && extra.reactionMs != null) state.times.push(extra.reactionMs);
     var res = applyAnswer(state.score, correct);
     state.score = res.score;
-    var kind = res.kind;
+    var kind = isTimeout ? 'timeout' : res.kind;
     state.lastKind = kind;
 
-    // Pick a calm text line: the game's own pool if it has one, else the
-    // global pool. ONLY the line choice is random.
-    var line;
-    if (kind === 'cheer') { var p1 = pickLineFor(state.challenge, 'cheering', state.lastCheer); line = p1.line; state.lastCheer = p1.lastLine; }
-    else if (kind === 'noob') { var p2 = pickLineFor(state.challenge, 'noob', state.lastNoob); line = p2.line; state.lastNoob = p2.lastLine; }
-    else { var p3 = pickLineFor(state.challenge, 'roasting', state.lastRoast); line = p3.line; state.lastRoast = p3.lastLine; }
+    // Pick the meme: ONLY the meme choice is random; the sound is the
+    // meme's ONE paired mp3 (see js/memes.js). Timeouts get the timeout
+    // pool (crying chicken + 6). 3rd consecutive wrong (answered, not a
+    // timeout) gets the Windows error screen instead of a roast, once.
+    var meme = null, isWinErr = false;
+    if (M && F) {
+      if (isTimeout) { meme = F.pickMeme(M.timeout, state.lastTimeout); state.lastTimeout = meme; }
+      else if (kind === 'cheer') {
+        meme = F.pickFromTier(M.cheering, F.cheerTierFor(hadLoss, F.fastAnswer(elapsedMs)), state.lastCheer);
+        state.lastCheer = meme;
+      }
+      else if (kind === 'noob') { meme = F.pickMeme(M.noob, state.lastNoob); state.lastNoob = meme; }
+      else if (F.winErrFor(state.consecLosses, state.winErrShown)) {
+        isWinErr = true; state.winErrShown = true; meme = M.winError[0];
+      }
+      else {
+        meme = F.pickFromTier(M.roasting, F.roastTierFor(streakBefore, state.consecLosses), state.lastRoast);
+        state.lastRoast = meme;
+      }
+    }
+    // The meme's own voice line; the calm text pools in reactions.js are
+    // the fallback if a meme ever has no voice.
+    var line = meme ? meme.voice : '';
+    if (!line) {
+      var fb = pickLineFor(state.challenge, kind === 'cheer' ? 'cheering' : kind === 'noob' ? 'noob' : 'roasting', null);
+      line = fb.line;
+    }
+
+    // Sounds: the meme's paired mp3 only. Timeouts: the chicken gets its
+    // escalating cry as its sound; other timeout memes play their own mp3.
+    // A wrong answer also grows the chicken cry after the meme's sound.
+    if (F) {
+      var cryLevel = F.cryLevelFor(state.consecLosses);
+      if (isTimeout) {
+        if (meme && meme.chicken) F.playChickenCry(cryLevel, 0);
+        else if (meme) F.playMemeAudio(meme);
+      } else {
+        if (meme) F.playMemeAudio(meme);
+        if (kind !== 'cheer') F.playChickenCry(cryLevel, 700);
+      }
+      // Rainbow horse: a correct answer in under 2 seconds. Airhorn when
+      // a 3-correct streak is reached.
+      if (correct && F.fastAnswer(elapsedMs)) F.flyRainbowHorse(false);
+      if (correct && state.correctStreak === 3) F.playAirhorn();
+    }
 
     // Answer line: what happened, in plain words.
     var answer = '';
@@ -284,16 +364,20 @@
       answer = 'The odd one was the ' + extra.spec.oddShape + ' (' + (extra.spec.diffKind === 'shape' ? 'different shape' : (extra.spec.bigger ? 'bigger' : 'smaller') + ' by ' + Math.round(extra.spec.sizeDiff * 100) + '%') + ').';
     }
 
-    $('reaction-kind').textContent = kind === 'cheer' ? 'CORRECT!' : kind === 'noob' ? 'NOOB!' : 'ROASTED!';
-    $('reaction-kind').className = kind;
+    $('reaction-kind').textContent = isWinErr ? 'ERROR!' : kind === 'cheer' ? 'CORRECT!' : kind === 'noob' ? 'NOOB!' : kind === 'timeout' ? "TIME'S UP!" : 'ROASTED!';
+    $('reaction-kind').className = isWinErr ? 'winerr' : kind;
     $('reaction-score').textContent = correct ? '+2 points' : kind === 'noob' ? 'stays at 0' : '-1 point';
     $('reaction-line').textContent = line;
     $('reaction-answer').textContent = answer;
+    var mm = $('reaction-meme');
+    mm.innerHTML = '';
+    if (meme && F) { var mel = F.memeEl(meme); if (mel) mm.appendChild(mel); }
     var r = $('reaction');
     r.classList.remove('hidden');
     r.classList.add('surprise');
 
     state.reactionTimer = setTimeout(function () {
+      if (F) F.stopCurrentAudio(); // long clips never play past the reaction overlay
       r.classList.add('hidden');
       r.classList.remove('surprise');
       state.round++;
@@ -304,6 +388,8 @@
 
   function finishSession() {
     var ch = state.challenge;
+    var timeSecs = Math.round((Date.now() - state.sessionStart) / 1000);
+    var fast = (typeof window !== 'undefined' && window.ReflexFeel) ? window.ReflexFeel.beat60(timeSecs) : false;
     var isNewBest = saveBest(ch, state.score);
     if (ch === 'color') saveColorTimes(state.times);
     var best = null, avg = null;
@@ -325,15 +411,22 @@
     $('cert-date').textContent = new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
     updateBestLines();
     showScreen('result-screen');
+    // Finish feel: under 60 seconds -> the rainbow horse flies across (big,
+    // with airhorn). Result music by band: 15+ fanfare, 10-14 cheer, 0-9 the
+    // FULL pigeon song (2:10) — it plays through until the player leaves.
+    if (typeof window !== 'undefined' && window.ReflexFeel) {
+      if (fast) window.ReflexFeel.flyRainbowHorse(true);
+      window.ReflexFeel.playCompletionMusic(state.score);
+    }
   }
 
   // ---- wiring ----
   function init() {
     renderCards();
     updateBestLines();
-    $('play-again-btn').addEventListener('click', function () { if (state) startSession(state.challenge); });
-    $('change-challenge-btn').addEventListener('click', function () { updateBestLines(); showScreen('start-screen'); });
-    $('home-btn').addEventListener('click', function () { updateBestLines(); showScreen('start-screen'); });
+    $('play-again-btn').addEventListener('click', function () { stopFeelAudio(); if (state) startSession(state.challenge); });
+    $('change-challenge-btn').addEventListener('click', function () { stopFeelAudio(); updateBestLines(); showScreen('start-screen'); });
+    $('home-btn').addEventListener('click', function () { stopFeelAudio(); updateBestLines(); showScreen('start-screen'); });
     $('fs-toggle').addEventListener('click', function () {
       try {
         if (document.fullscreenElement) document.exitFullscreen();
@@ -342,13 +435,16 @@
     });
     // Instruction screen buttons.
     $('howto-start-btn').addEventListener('click', function () {
+      cancelSpeech(); // narration stops the moment START is pressed
+      stopFeelAudio();
       if (howtoMode === 'resume') { showScreen('game-screen'); startRound(); }
       else if (pendingChallenge) startSession(pendingChallenge);
     });
-    $('howto-back-btn').addEventListener('click', function () { updateBestLines(); showScreen('start-screen'); });
+    $('howto-back-btn').addEventListener('click', function () { cancelSpeech(); updateBestLines(); showScreen('start-screen'); });
     // Mid-game "How to play": pause the session, re-open the instructions.
     $('howto-link').addEventListener('click', function () {
       if (!state) return;
+      stopFeelAudio();
       if (state.controller && state.controller.destroy) state.controller.destroy();
       showHowto(state.challenge, 'resume');
     });
